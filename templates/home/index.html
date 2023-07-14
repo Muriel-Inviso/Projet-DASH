@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block main-content %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container">
+    <!-- <a class="navbar-brand" href="{% url 'home:index' %}">
+      <img src="{% static 'app/img/logo.png' %}" alt="Logo Inviso">
+    </a> -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <a class="navbar-brand btn btn-danger text-white" href="{% url 'auth:logout' %}">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+            Ajouter de donnée excel
+        </button>
+    </div>
+  </div>
+</nav>
+<hr>
+<div class="container text-center mb-4">
+  <button type="button" class="navbar-brand btn btn-primary text-white">Valider Tout</button>
+</div>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label for="select-base" class="form-label">Sélectionner une base de données</label>
+        <select class="form-select" id="select-base">
+          <option selected>Choisir une option...</option>
+          {% for base in bases %}
+          <option value="{{ base.id }}">{{ base.db_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <table class="table table-bordered w-100" id="table-base">
+        <thead class="table-dark">
+          <tr>
+            <th scope="col">N°</th>
+            <th scope="col">Libellé</th>
+            <th scope="col">Compte</th>
+            <th scope="col">Débit (Ar)</th>
+            <th scope="col">Crédit (Ar)</th>
+            <th scope="col">Option</th>
+            <th scope="col">Identifiant</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+    <div class="col-md-6">
+      <div class="mb-3">
+        <label for="select-base-duplicate" class="form-label">Sélectionner une base de données</label>
+        <select class="form-select" id="select-base-duplicate">
+          <option selected>Choisir une option...</option>
+          {% for base in bases %}
+          <option value="{{ base.id }}">{{ base.db_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <table class="table table-bordered" id="table-base-duplicate">
+        <thead class="table-dark">
+          <tr>
+            <th scope="col">N°</th>
+            <th scope="col">Libellé</th>
+            <th scope="col">Compte</th>
+            <th scope="col">Débit (Ar)</th>
+            <th scope="col">Crédit (Ar)</th>
+            <th scope="col">Option</th>
+            <th scope="col">Identifiant</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Importer des données depuis un fichier Excel</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+          <form action="{% url 'home:import_data' %}" method="post" enctype="multipart/form-data" class="mt-4">
+              {% csrf_token %}
+              <div class="mb-3">
+                  <label for="fileInput" class="form-label">Choisir le fichier Excel</label>
+                  <input type="file" name="excel_file" id="fileInput" class="form-control">
+              </div>
+              <button type="submit" class="btn btn-primary">Importer</button>
+          </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+
+</script>
+{% endblock %}
