@@ -32,7 +32,6 @@ class Societe(models.Model):
     active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now=True, null=True)
     updated_at = models.DateTimeField(auto_now_add=True, null=True)
-    connexion = models.ForeignKey(Connexion, on_delete=models.CASCADE, null=True, blank=True, verbose_name='Valeur de Connexion')
 
     def __str__(self):
         return self.name
@@ -42,10 +41,10 @@ class Societe(models.Model):
 
 
 class AssociationSociete(models.Model):
-    societe1 = models.ForeignKey(Societe, on_delete=models.CASCADE, verbose_name='Societe 1', related_name='societe1_associations')
-    societe2 = models.ForeignKey(Societe, on_delete=models.CASCADE, verbose_name='Societe 2', related_name='societe2_associations')
+    societe1 = models.ForeignKey(Societe, on_delete=models.CASCADE, verbose_name='Societe 1', related_name='societe1_associations', null=True)
+    societe2 = models.ForeignKey(Societe, on_delete=models.CASCADE, verbose_name='Societe 2', related_name='societe2_associations', null=True)
     type = models.ForeignKey(Type, on_delete=models.CASCADE, blank=True, null=True, verbose_name='Type de Transaction')
     tiers = models.ForeignKey(Tiers, on_delete=models.CASCADE, blank=True, null=True, verbose_name='Numéro Tiers')
 
     def __str__(self):
-        return f"{self.societe1} - {self.societe2}"
+        return f"{self.societe1.name} - {self.societe2.name}"
