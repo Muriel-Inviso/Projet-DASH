@@ -1,19 +1,51 @@
 from django.contrib import admin
-from import_export.admin import ImportExportModelAdmin
-from .models import Connexion, Type, Tiers, Societe, AssociationSociete
-from .resources import AssociationSocieteResource
-
-# Register the other models as usual
-admin.site.register(Connexion)
-admin.site.register(Type)
-admin.site.register(Tiers)
-admin.site.register(Societe)
+from .models import Societe, Connexion, Type, Tiers, AssociationSociete
 
 
-# Register the AssociationSociete model using ImportExportModelAdmin
+class AssociationSocieteInline(admin.TabularInline):
+    model = AssociationSociete
+    fk_name = 'societe1'
+    extra = 1
+
+
+@admin.register(Societe)
+class SocieteModelAdmin(admin.ModelAdmin):
+    list_display = ['name', 'active', 'created_at', 'updated_at']
+    list_filter = ['active']
+    list_editable = ['active']
+    search_fields = ['societe1']
+    fieldsets = (
+        ('Informations générales', {
+            'fields': ('name', 'active')
+        }),
+        ('Dates', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',),
+        }),
+    )
+    readonly_fields = ('created_at', 'updated_at')
+    inlines = [AssociationSocieteInline]
+
+
+@admin.register(Connexion)
+class ConnexionModelAdmin(admin.ModelAdmin):
+    list_display = ['user_name', 'ip_server', 'active']
+    list_filter = ['active']
+    search_fields = ['user_name']
+
+
+@admin.register(Type)
+class TypeModelAdmin(admin.ModelAdmin):
+    list_display = ['intitule']
+
+
+@admin.register(Tiers)
+class TiersModelAdmin(admin.ModelAdmin):
+    list_display = ['value']
+
+
 @admin.register(AssociationSociete)
-class AssociationSocieteAdmin(ImportExportModelAdmin):
-    resource_class = AssociationSocieteResource
-    list_display = ('societe1', 'societe2', 'type', 'tiers')
-    list_filter = ('type', 'tiers')
-    search_fields = ('societe1__name', 'societe2__name')
+class AssociationSocieteModelAdmin(admin.ModelAdmin):
+    list_display = ['societe1', 'societe2', 'type', 'tiers']
+    list_filter = ['type', 'tiers']
+    search_fields = ['societe1__societe1', 'societe2__societe1']
