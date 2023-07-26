@@ -1,6 +1,7 @@
 from import_export import resources
 from .models import AssociationSociete, Societe, Type, Tiers
 
+
 class AssociationSocieteResource(resources.ModelResource):
     class Meta:
         model = AssociationSociete
