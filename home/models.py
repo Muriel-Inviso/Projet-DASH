@@ -41,10 +41,20 @@ class Societe(models.Model):
 
 
 class AssociationSociete(models.Model):
-    societe1 = models.ForeignKey(Societe, on_delete=models.CASCADE, verbose_name='Societe 1', related_name='societe1_associations', null=True)
-    societe2 = models.ForeignKey(Societe, on_delete=models.CASCADE, verbose_name='Societe 2', related_name='societe2_associations', null=True)
+    societe1 = models.ForeignKey(Societe, on_delete=models.CASCADE, verbose_name='Societe 1',
+                                 related_name='societe1_associations', null=True)
+    societe2 = models.ForeignKey(Societe, on_delete=models.CASCADE, verbose_name='Societe 2',
+                                 related_name='societe2_associations', null=True)
     type = models.ForeignKey(Type, on_delete=models.CASCADE, blank=True, null=True, verbose_name='Type de Transaction')
     tiers = models.ForeignKey(Tiers, on_delete=models.CASCADE, blank=True, null=True, verbose_name='Numéro Tiers')
 
     def __str__(self):
         return f"{self.societe1.name} - {self.societe2.name}"
+
+
+class Indentite(models.Model):
+    name = models.CharField(max_length=250)
+    correspondance = models.CharField(max_length=250)
+
+    def __str__(self):
+        return self.name

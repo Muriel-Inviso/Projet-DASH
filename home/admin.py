@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Societe, Connexion, Type, Tiers, AssociationSociete
+from .models import Societe, Connexion, Type, Tiers, AssociationSociete, Indentite
 
 
 class AssociationSocieteInline(admin.TabularInline):
@@ -48,4 +48,9 @@ class TiersModelAdmin(admin.ModelAdmin):
 class AssociationSocieteModelAdmin(admin.ModelAdmin):
     list_display = ['societe1', 'societe2', 'type', 'tiers']
     list_filter = ['type', 'tiers']
-    search_fields = ['societe1__societe1', 'societe2__societe1']
+    search_fields = ['societe1', 'societe2']
+
+
+@admin.register(Indentite)
+class IdentiteModelAdmin(admin.ModelAdmin):
+    list_display = ['name', 'correspondance']
