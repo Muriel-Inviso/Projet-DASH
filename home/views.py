@@ -6,6 +6,8 @@ from django.http import JsonResponse, HttpResponse
 from django.core.exceptions import ValidationError
 from .forms import ImportExcelForm
 from openpyxl import load_workbook
+from django.contrib import messages
+
 
 server1 = '192.168.1.161'
 server2 = '192.168.1.7'
@@ -13,50 +15,53 @@ username = 'reader'
 password = 'm1234'
 
 
-def get_connection_string(server, database):
-    conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};" \
-               f"DATABASE={database};UID={username};PWD={password}"
+def get_connection_string(database):
+    # Utilisation de f-string pour formater la chaîne de connexion
 
-    servers_to_try = [server, server2]
+    # Définition des serveurs à essayer dans l'ordre de priorité
+    servers_to_try = [server1, server2]
 
-    for server_to_try in servers_to_try:
+    for server in servers_to_try:
         try:
-            with pyodbc.connect(conn_str.replace(server, server_to_try)) as connection:
-                # Test the connection to the server by executing a sample query
+            conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};" \
+                       f"DATABASE={database};UID={username};PWD={password}"
+            print(f"CONNEXION STR {conn_str}")
+            # Tentative de connexion au serveur actuel
+            with pyodbc.connect(conn_str) as connection:
+                # Test de la connexion au serveur en exécutant une requête d'exemple
                 with connection.cursor() as cursor:
                     cursor.execute("SELECT 1")
-                print(f'Successfully connected to Server: {server_to_try}')
-                return conn_str.replace(server, server_to_try)
+                print(f'Connexion réussie au serveur : {server}')
+                print(f"Output {conn_str}")
+                return [conn_str, server]
         except pyodbc.OperationalError as e:
-            print(f'Failed to connect to Server: {server_to_try}, Error: {e}')
+            print(f'Échec de la connexion au serveur : {server}, Erreur : {e}')
 
-    # If none of the servers connected successfully, raise an error
-    raise ValidationError("Failed to connect to both servers.")
+    # Si aucun des serveurs n'a réussi à se connecter, on lève une exception
+    raise ValidationError("Échec de connexion aux deux serveurs.")
 
 
-def chercher(database, ct_num, cg_num):
-    conn_str = get_connection_string(server1, database)
-
+def chercher(database, ct_num, cg_num, conn_str):
+    # Utilisation de la fonction get_connection_string pour obtenir la chaîne de connexion au serveur approprié
+    # conn_str = get_connection_string(database)
     # Connexion à la base de données
     try:
-        with pyodbc.connect(conn_str) as connection:
+        with pyodbc.connect(conn_str[0]) as connection:
             # Création d'un curseur
             cursor = connection.cursor()
 
             ct_num = format_tuple(ct_num)
             cg_num = format_tuple(cg_num)
 
-            query = "SELECT EC_PIECE, CG_NUM, EC_INTITULE, CASE WHEN EC_SENS =0 THEN EC_MONTANT END AS DEBIT," \
+            # Utilisation de paramètres pour éviter les vulnérabilités d'injection SQL
+            query = "SELECT EC_PIECE, CG_NUM, CG_NUM, EC_INTITULE, CASE WHEN EC_SENS =0 THEN EC_MONTANT END AS DEBIT," \
                     f" CASE WHEN EC_SENS =1 THEN EC_MONTANT END AS CREDIT FROM F_ECRITUREC WHERE (CT_NUM in {ct_num}" \
                     f" OR CG_NUM in {cg_num}) AND year(jm_date)=2023"
-
-            print(f'Query : {query}')
 
             cursor.execute(query)
 
             # Récupération des résultats
             rows = cursor.fetchall()
-            print(rows)
     except pyodbc.OperationalError as e:
         message = f"Une erreur s'est produite lors de la connexion à la base de données INVISO : {e}"
         raise ValidationError(message)
@@ -65,18 +70,17 @@ def chercher(database, ct_num, cg_num):
     data = []
 
     for row in rows:
-        EC_PIECE, CG_NUM, EC_INTITULE, DEBIT, CREDIT = row
+        EC_PIECE, CG_NUM, CT_NUM, EC_INTITULE, DEBIT, CREDIT = row
 
         item = {
             'ec_piece': EC_PIECE,
-            'cg_num': str(CG_NUM)[:5],
+            'cg_num': str(CG_NUM)[:10],
+            'ct_num': str(CT_NUM)[:10],
             'ec_intitule': EC_INTITULE,
             'debit': "{:.2f}".format(float(DEBIT)) if DEBIT else '',
             'credit': "{:.2f}".format(float(CREDIT)) if CREDIT else ''
         }
-
         data.append(item)
-
     return data
 
 
@@ -101,10 +105,6 @@ def inter_value(value):
     return result
 
 
-def identification(societe):
-    pass
-
-
 def index(request):
     results1 = []
     results2 = []
@@ -119,7 +119,7 @@ def index(request):
     # Vérifier si l'utilisateur est connecté
     # if not request.session.get('user_session', False):
     #     # Si l'utilisateur n'est pas connecté, redirigez-le vers la page de connexion.
-    #     return redirect('auth:login')
+    #     # return redirect('auth:login')
 
     if request.method == 'POST':
         form = ImportExcelForm(request.POST, request.FILES)
@@ -127,14 +127,15 @@ def index(request):
             file = request.FILES['excel_file']
             try:
                 importer_associations(file)
-                message = 'Importation réussie !'
+                messages.success(request, 'Importation réussie !')
                 return redirect('home:index')
             except ValidationError as e:
-                message = f"Une erreur s'est produite lors du traitement du fichier excel : {str(e)}"
+                messages.error(request, f"Une erreur s'est produite lors du traitement du fichier excel : {str(e)}")
             except Exception as e:
-                message = f"Une erreur s'est produite lors du traitement du fichier excel : {str(e)}"
+                messages.error(request, f"Une erreur s'est produite lors du traitement du fichier excel : {str(e)}")
         else:
-            message = 'Formulaire invalide, veuillez vérifier les champs !'
+            messages.error(request, 'Formulaire invalide, veuillez vérifier les champs !')
+
     else:
         form = ImportExcelForm()
         societe_1_name = request.GET.get('societe_1_name', '')
@@ -167,10 +168,17 @@ def index(request):
                 value2[0] = ('',)
             if not value2[1]:
                 value2[1] = ('',)
-
+            print(f"Recherche 1 : {societe_1_name}, value1: {value1[0]}(ct_num), value2: {value1[1]}(cg_num).")
+            print(f"Recherche 2 : {societe_2_name}, value1: {value2[0]}(ct_num), value2: {value2[1]}(cg_num).")
+            print(societe_2_name)
+            conn_1 = get_connection_string(societe_1_name)
+            conn_2 = get_connection_string(societe_2_name)
+            print(f"CON1 : {conn_1[1]} et CON2: {conn_2[1]}")
             try:
-                results1 = chercher(database=societe_1_name, ct_num=value1[0], cg_num=value1[1])
-                results2 = chercher(database=societe_2_name, ct_num=value2[0], cg_num=value2[1])
+                results1 = chercher(database=societe_1_name, ct_num=value1[0], cg_num=value1[1],
+                                    conn_str=conn_1)
+                results2 = chercher(database=societe_2_name, ct_num=value2[0], cg_num=value2[1],
+                                    conn_str=conn_2)
             except Exception as e:
                 message = f"Une erreur s'est produite lors de la recherche dans la base de données :  {str(e)}"
 

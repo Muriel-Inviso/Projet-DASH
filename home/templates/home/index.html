@@ -105,62 +105,70 @@
 
   <hr>
 
-  <div class="row">
-    <div class="col-md-6">
-      <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-          <tr>
-            <th>N°</th>
-            <th>INTITULE</th>
-            <th>DEBIT</th>
-            <th>CREDIT</th>
-            <th>REF</th>
-            <th>VALUE</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in results1 %}
-            <tr>
-              <td>{{ item.cg_num }}</td>
-              <td>{{ item.ec_intitule|slice:":60" }}</td>
-              <td>{{ item.debit }}</td>
-              <td>{{ item.credit }}</td>
-              <td></td>
-              <td></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="col-md-6">
-      <table class="table table-bordered table-striped">
-        <thead class="table-dark">
-          <tr>
-            <th>N°</th>
-            <th>INTITULE</th>
-            <th>DEBIT</th>
-            <th>CREDIT</th>
-            <th>REF</th>
-            <th>VALUE</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in results2 %}
-            <tr>
-              <td>{{ item.cg_num }}</td>
-              <td>{{ item.ec_intitule|slice:":60" }}</td>
-              <td>{{ item.debit }}</td>
-              <td>{{ item.credit }}</td>
-              <td></td>
-              <td></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+    <div class="row">
+        <div class="col-md-6">
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>CG</th>
+        <th>CT</th>
+        <th>INTITULE</th>
+        <th>DEBIT</th>
+        <th>CREDIT</th>
+        <th>REF</th>
+        <th>VALUE</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in results1 %}
+        <tr>
+          <td>{{ item.cg_num }}</td>
+          <td>{{ item.ct_num }}</td>
+          <td>{{ item.ec_intitule|slice:":60" }}</td>
+          <td>{{ item.debit }}</td>
+          <td>{{ item.credit }}</td>
+          <td>
+            <button class="btn btn-primary valider-btn" data-value="{{ item.value }}">Valider</button>
+          </td>
+          <td>{{ item.value }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
+
+<div class="col-md-6">
+  <table class="table table-bordered table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>CG</th>
+        <th>CT</th>
+        <th>INTITULE</th>
+        <th>DEBIT</th>
+        <th>CREDIT</th>
+        <th>REF</th>
+        <th>VALUE</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in results2 %}
+        <tr>
+          <td>{{ item.cg_num }}</td>
+          <td>{{ item.ct_num }}</td>
+          <td>{{ item.ec_intitule|slice:":60" }}</td>
+          <td>{{ item.debit }}</td>
+          <td>{{ item.credit }}</td>
+          <td>
+            <button class="btn btn-primary valider-btn" data-value="{{ item.value }}">Valider</button>
+          </td>
+          <td>{{ item.value }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+      </div>
+    </div>
 {% endblock %}
 
 {% block style %}
@@ -173,4 +181,32 @@
     white-space: nowrap;
   }
 </style>
+{% endblock %}
+{% block script %}
+<script>
+  // Function to handle the button click
+  function handleValiderClick(value) {
+    // Find all rows with the specified value in the "VALUE" column of both tables
+    const rows1 = document.querySelectorAll(`table:nth-of-type(1) td[data-value="${value}"]`);
+    const rows2 = document.querySelectorAll(`table:nth-of-type(2) td[data-value="${value}"]`);
+
+    // Update the rows in both tables
+    for (const row of rows1) {
+      row.parentElement.classList.add('table-success'); // Add a class to highlight the row (you can customize this class in your CSS)
+    }
+
+    for (const row of rows2) {
+      row.parentElement.classList.add('table-success'); // Add a class to highlight the row (you can customize this class in your CSS)
+    }
+  }
+
+  // Attach click event listener to all "Valider" buttons
+  const buttons = document.querySelectorAll('.valider-btn');
+  buttons.forEach(button => {
+    button.addEventListener('click', () => {
+      const value = button.getAttribute('data-value');
+      handleValiderClick(value);
+    });
+  });
+</script>
 {% endblock %}
