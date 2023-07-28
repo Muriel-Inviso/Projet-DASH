@@ -8,7 +8,6 @@ from .forms import ImportExcelForm
 from openpyxl import load_workbook
 from django.contrib import messages
 
-
 server1 = '192.168.1.161'
 server2 = '192.168.1.7'
 username = 'reader'
@@ -21,6 +20,7 @@ def get_connection_string(database):
     # Définition des serveurs à essayer dans l'ordre de priorité
     servers_to_try = [server1, server2]
 
+    error_message = None  # Ajoutez une variable pour capturer l'erreur
     for server in servers_to_try:
         try:
             conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};" \
@@ -35,16 +35,18 @@ def get_connection_string(database):
                 print(f"Output {conn_str}")
                 return [conn_str, server]
         except pyodbc.OperationalError as e:
-            print(f'Échec de la connexion au serveur : {server}, Erreur : {e}')
+            error_message = f'Échec de la connexion au serveur : {server}, Erreur : {e}'
 
-    # Si aucun des serveurs n'a réussi à se connecter, on lève une exception
-    raise ValidationError("Échec de connexion aux deux serveurs.")
+        # Si aucun des serveurs n'a réussi à se connecter, on lève une exception
+    if error_message:
+        raise ValidationError(error_message)
 
 
 def chercher(database, ct_num, cg_num, conn_str):
     # Utilisation de la fonction get_connection_string pour obtenir la chaîne de connexion au serveur approprié
     # conn_str = get_connection_string(database)
     # Connexion à la base de données
+    error_message = None  # Ajoutez une variable pour capturer l'erreur
     try:
         with pyodbc.connect(conn_str[0]) as connection:
             # Création d'un curseur
@@ -63,8 +65,10 @@ def chercher(database, ct_num, cg_num, conn_str):
             # Récupération des résultats
             rows = cursor.fetchall()
     except pyodbc.OperationalError as e:
-        message = f"Une erreur s'est produite lors de la connexion à la base de données INVISO : {e}"
-        raise ValidationError(message)
+        error_message = f"Une erreur s'est produite lors de la connexion à la base de données INVISO : {e}"
+
+    if error_message:
+        raise ValidationError(error_message)
 
     # Liste pour stocker les résultats
     data = []
@@ -116,11 +120,6 @@ def index(request):
     societe_1_name = ''
     societe_2_name = ''
 
-    # Vérifier si l'utilisateur est connecté
-    # if not request.session.get('user_session', False):
-    #     # Si l'utilisateur n'est pas connecté, redirigez-le vers la page de connexion.
-    #     # return redirect('auth:login')
-
     if request.method == 'POST':
         form = ImportExcelForm(request.POST, request.FILES)
         if form.is_valid():
@@ -142,50 +141,43 @@ def index(request):
         societe_2_name = request.GET.get('societe_2_name', '')
 
         if societe_1_name and societe_2_name and societe_1_name != societe_2_name:
-            associations1 = AssociationSociete.objects.filter(
-                societe1__name__exact=societe_1_name,
-                societe2__name__exact=societe_2_name,
-            )
-
-            associations2 = AssociationSociete.objects.filter(
-                societe1__name__exact=societe_2_name,
-                societe2__name__exact=societe_1_name,
-            )
-
-            value1 = inter_value(associations1)
-            value2 = inter_value(associations2)
-
-            print("-------------------------------------------------")
-            print(f'value A : (1) : {value1[0]}, (2) :{value1[1]}')
-            print(f'value B : (1) : {value2[0]}, (2) :{value2[1]}')
-            print("-------------------------------------------------")
-            print("")
-            if not value1[0]:
-                value1[0] = ('',)
-            if not value1[1]:
-                value1[1] = ('',)
-            if not value2[0]:
-                value2[0] = ('',)
-            if not value2[1]:
-                value2[1] = ('',)
-            print(f"Recherche 1 : {societe_1_name}, value1: {value1[0]}(ct_num), value2: {value1[1]}(cg_num).")
-            print(f"Recherche 2 : {societe_2_name}, value1: {value2[0]}(ct_num), value2: {value2[1]}(cg_num).")
-            print(societe_2_name)
-            conn_1 = get_connection_string(societe_1_name)
-            conn_2 = get_connection_string(societe_2_name)
-            print(f"CON1 : {conn_1[1]} et CON2: {conn_2[1]}")
             try:
-                results1 = chercher(database=societe_1_name, ct_num=value1[0], cg_num=value1[1],
-                                    conn_str=conn_1)
-                results2 = chercher(database=societe_2_name, ct_num=value2[0], cg_num=value2[1],
-                                    conn_str=conn_2)
+                associations1 = AssociationSociete.objects.filter(
+                    societe1__name__exact=societe_1_name,
+                    societe2__name__exact=societe_2_name,
+                )
+
+                associations2 = AssociationSociete.objects.filter(
+                    societe1__name__exact=societe_2_name,
+                    societe2__name__exact=societe_1_name,
+                )
+
+                value1 = inter_value(associations1)
+                value2 = inter_value(associations2)
+
+                if not value1[0]:
+                    value1[0] = ('',)
+                if not value1[1]:
+                    value1[1] = ('',)
+                if not value2[0]:
+                    value2[0] = ('',)
+                if not value2[1]:
+                    value2[1] = ('',)
+
+                conn_1 = get_connection_string(societe_1_name)
+                conn_2 = get_connection_string(societe_2_name)
+
+                results1 = chercher(database=societe_1_name, ct_num=value1[0], cg_num=value1[1], conn_str=conn_1)
+                results2 = chercher(database=societe_2_name, ct_num=value2[0], cg_num=value2[1], conn_str=conn_2)
+
+            except ValidationError as e:
+                message = f"Une erreur s'est produite lors de la recherche dans la base de données :  {str(e)}"
             except Exception as e:
                 message = f"Une erreur s'est produite lors de la recherche dans la base de données :  {str(e)}"
 
         else:
             associations1 = {}
             associations2 = {}
-        # value_tiers = tuple(inter_value(associations1) + inter_value(associations2))
 
     societe = Societe.objects.filter(active=True)
 
