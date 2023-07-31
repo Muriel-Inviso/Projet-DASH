@@ -32,9 +32,9 @@ def get_connection_string(database):
             print(f"Output {conn_str}")
             return [conn_str, server]
     except pyodbc.OperationalError as e:
-            error_message = f'Échec de la connexion au serveur : {server}, Erreur : {e}'
+        error_message = f'Échec de la connexion au serveur : {server}, Erreur : {e}'
 
-        # Si aucun des serveurs n'a réussi à se connecter, on lève une exception
+    # Si aucun des serveurs n'a réussi à se connecter, on lève une exception
     if error_message:
         raise ValidationError(error_message)
 
@@ -253,16 +253,32 @@ def importer_associations(file):
 
 
 def ajax_view(request):
+    # Define the keys for session data
+    data_keys = ['ecPiece', 'ecRefPiece', 'joNum', 'ecNo', 'debit', 'credit']
+
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            # Access the data using data['ecPiece'], data['cgNum'], and data['ctNum']
-            # Your processing logic here...
-            print("------------------------------------")
-            print(f"Data : {data}")
-            print("------------------------------------")
+            tableau = data.get('tableau', 0)
+            request.session['tableau1'] = 1 if tableau == 1 else 0
+            request.session['tableau2'] = 1 if tableau == 2 else 0
+
+            # Loop through the data_keys and set the corresponding session variables
+            for key in data_keys:
+                if f'{key}1' in data:
+                    request.session[f'{key}1'] = data[f'{key}1']
+                if f'{key}2' in data:
+                    request.session[f'{key}2'] = data[f'{key}2']
+
+            # Check if condition using session variables instead of separate variables
+            if request.session['tableau1'] == 1 and request.session['tableau2'] == 1:
+                if request.session['debit1'] == request.session['credit2'] and request.session['credit1'] == request.session['debit2'] \
+                        or request.session['debit2'] == request.session['credit1'] and request.session['credit2'] == request.session['debit1']:
+                    print('EXECUTE')
+
             return JsonResponse({"success": True, "message": "Data received successfully."})
         except json.JSONDecodeError:
             return JsonResponse({"success": False, "message": "Invalid JSON data."})
     else:
         return JsonResponse({"success": False, "message": "Invalid request method."})
+

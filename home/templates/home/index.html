@@ -139,7 +139,10 @@
                             <td class="max-width: 50px;">
                                 <button class="btn btn-primary valider-btn" data-piece="{{ item.ec_piece }}"
                                         data-jonum="{{ item.jo_num }}" data-ecno="{{ item.ec_no }}"
-                                        data-ecrefpiece="{{ item.ec_refpiece }}">Select</button>
+                                        data-ecrefpiece="{{ item.ec_refpiece }}" data-tableau="1"
+                                        data-base="{{ societe_1_name }}" data-debit="{{ item.debit }}"
+                                        data-credit="{{ item.credit }}"
+                                >Select</button>
                             </td>
                             <td></td>
                         </tr>
@@ -179,7 +182,10 @@
                             <td class="max-width: 50px;">
                                 <button class="btn btn-primary valider-btn" data-piece="{{ item.ec_piece }}"
                                         data-jonum="{{ item.jo_num }}" data-ecno="{{ item.ec_no }}"
-                                        data-ecrefpiece="{{ item.ec_refpiece }}">Select</button>
+                                        data-ecrefpiece="{{ item.ec_refpiece }}" data-tableau="2"
+                                        data-base="{{ societe_2_name }}" data-debit="{{ item.debit }}"
+                                        data-credit="{{ item.credit }}"
+                                >Select</button>
                             </td>
                             <td class="max-width: 50px;"></td>
                         </tr>
@@ -214,12 +220,20 @@
             const joNum = $(this).data("jonum");
             const ecNo = $(this).data("ecno");
             const ecRefPiece = $(this).data("ecrefpiece");
+            const tableau = $(this).data("tableau");
+            const base = $(this).data("base");
+            const debit = $(this).data("debit");
+            const credit = $(this).data("credit");
 
             // Log the values to the console
             console.log("ec_piece:", ecPiece);
             console.log("jo_num:", joNum);
             console.log("ec_no:", ecNo);
-            console.log("ec_refpiece:", ecRefPiece)
+            console.log("ec_refpiece:", ecRefPiece);
+            console.log("tableau:", tableau);
+            console.log("base:", base);
+            console.log("debit:", debit);
+            console.log("credit:", credit);
 
             // Create the data object to be sent in the POST request
             const data = {
@@ -227,6 +241,10 @@
                 ecRefPiece: ecRefPiece,
                 joNum: joNum,
                 ecNo: ecNo,
+                tableau: tableau,
+                base: base,
+                debit: debit,
+                credit: credit
             };
 
             // Send the data using AJAX POST request
@@ -250,5 +268,4 @@
         });
     });
 </script>
-
 {% endblock %}
