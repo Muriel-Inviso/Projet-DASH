@@ -29,6 +29,9 @@ class Tiers(models.Model):
 
 class Societe(models.Model):
     name = models.CharField(max_length=150, unique=True, verbose_name='Nom du Société', null=True)
+    user = models.CharField(max_length=150, default='reader', null=True)
+    password = models.CharField(max_length=150, default='m1234', null=True)
+    server = models.CharField(max_length=25, default='192.168.1.161', null=True)
     active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now=True, null=True)
     updated_at = models.DateTimeField(auto_now_add=True, null=True)

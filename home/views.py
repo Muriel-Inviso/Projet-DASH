@@ -1,40 +1,37 @@
 import pandas as pd
 import pyodbc
+import json
 from django.shortcuts import render, redirect
-from .models import Societe, AssociationSociete, Type, Tiers, Connexion, Indentite
+from .models import Societe, AssociationSociete, Type, Tiers, Indentite
 from django.http import JsonResponse, HttpResponse
 from django.core.exceptions import ValidationError
 from .forms import ImportExcelForm
 from openpyxl import load_workbook
 from django.contrib import messages
 
-server1 = '192.168.1.161'
-server2 = '192.168.1.7'
-username = 'reader'
-password = 'm1234'
-
 
 def get_connection_string(database):
     # Utilisation de f-string pour formater la chaîne de connexion
+    value = Societe.objects.get(name=database)
 
     # Définition des serveurs à essayer dans l'ordre de priorité
-    servers_to_try = [server1, server2]
-
+    server = value.server
+    username = value.user
+    password = value.password
     error_message = None  # Ajoutez une variable pour capturer l'erreur
-    for server in servers_to_try:
-        try:
-            conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};" \
-                       f"DATABASE={database};UID={username};PWD={password}"
-            print(f"CONNEXION STR {conn_str}")
-            # Tentative de connexion au serveur actuel
-            with pyodbc.connect(conn_str) as connection:
-                # Test de la connexion au serveur en exécutant une requête d'exemple
-                with connection.cursor() as cursor:
-                    cursor.execute("SELECT 1")
-                print(f'Connexion réussie au serveur : {server}')
-                print(f"Output {conn_str}")
-                return [conn_str, server]
-        except pyodbc.OperationalError as e:
+    try:
+        conn_str = f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};" \
+                   f"DATABASE={database};UID={username};PWD={password}"
+        print(f"CONNEXION STR {conn_str}")
+        # Tentative de connexion au serveur actuel
+        with pyodbc.connect(conn_str) as connection:
+            # Test de la connexion au serveur en exécutant une requête d'exemple
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+            print(f'Connexion réussie au serveur : {server}')
+            print(f"Output {conn_str}")
+            return [conn_str, server]
+    except pyodbc.OperationalError as e:
             error_message = f'Échec de la connexion au serveur : {server}, Erreur : {e}'
 
         # Si aucun des serveurs n'a réussi à se connecter, on lève une exception
@@ -56,7 +53,7 @@ def chercher(database, ct_num, cg_num, conn_str):
             cg_num = format_tuple(cg_num)
 
             # Utilisation de paramètres pour éviter les vulnérabilités d'injection SQL
-            query = "SELECT EC_PIECE, CG_NUM, CG_NUM, EC_INTITULE, CASE WHEN EC_SENS =0 THEN EC_MONTANT END AS DEBIT," \
+            query = "SELECT  JO_NUM, EC_PIECE, EC_No, EC_INTITULE, EC_REFPIECE, CASE WHEN EC_SENS =0 THEN EC_MONTANT END AS DEBIT," \
                     f" CASE WHEN EC_SENS =1 THEN EC_MONTANT END AS CREDIT FROM F_ECRITUREC WHERE (CT_NUM in {ct_num}" \
                     f" OR CG_NUM in {cg_num}) AND year(jm_date)=2023"
 
@@ -64,6 +61,7 @@ def chercher(database, ct_num, cg_num, conn_str):
 
             # Récupération des résultats
             rows = cursor.fetchall()
+
     except pyodbc.OperationalError as e:
         error_message = f"Une erreur s'est produite lors de la connexion à la base de données INVISO : {e}"
 
@@ -74,13 +72,14 @@ def chercher(database, ct_num, cg_num, conn_str):
     data = []
 
     for row in rows:
-        EC_PIECE, CG_NUM, CT_NUM, EC_INTITULE, DEBIT, CREDIT = row
+        JO_NUM, EC_PIECE, EC_No, EC_INTITULE, EC_REFPIECE, DEBIT, CREDIT = row
 
         item = {
+            'jo_num': JO_NUM,
             'ec_piece': EC_PIECE,
-            'cg_num': str(CG_NUM)[:10],
-            'ct_num': str(CT_NUM)[:10],
+            'ec_no': EC_No,
             'ec_intitule': EC_INTITULE,
+            'ec_refpiece': EC_REFPIECE,
             'debit': "{:.2f}".format(float(DEBIT)) if DEBIT else '',
             'credit': "{:.2f}".format(float(CREDIT)) if CREDIT else ''
         }
@@ -251,3 +250,19 @@ def importer_associations(file):
                 type=type_obj,
                 # connexion=connexion  # Associer la connexion à la société
             )
+
+
+def ajax_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # Access the data using data['ecPiece'], data['cgNum'], and data['ctNum']
+            # Your processing logic here...
+            print("------------------------------------")
+            print(f"Data : {data}")
+            print("------------------------------------")
+            return JsonResponse({"success": True, "message": "Data received successfully."})
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON data."})
+    else:
+        return JsonResponse({"success": False, "message": "Invalid request method."})

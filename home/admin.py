@@ -10,13 +10,13 @@ class AssociationSocieteInline(admin.TabularInline):
 
 @admin.register(Societe)
 class SocieteModelAdmin(admin.ModelAdmin):
-    list_display = ['name', 'active', 'created_at', 'updated_at']
+    list_display = ['name', 'active', 'user', 'server', 'created_at', 'updated_at']
     list_filter = ['active']
     list_editable = ['active']
     search_fields = ['societe1']
     fieldsets = (
         ('Informations générales', {
-            'fields': ('name', 'active')
+            'fields': ('name', 'user', 'server', 'active')
         }),
         ('Dates', {
             'fields': ('created_at', 'updated_at'),

@@ -3,210 +3,252 @@
 
 {% block main-content %}
 <div class="container-fluid mt-4">
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container-fluid">
-      <!-- <a class="navbar-brand" href="{% url 'home:index' %}">
-        <img src="{% static 'app/img/logo.png' %}" alt="Logo Inviso">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <!-- <a class="navbar-brand" href="{% url 'home:index' %}">
+{#        <img src="{% static '' %}" alt="Logo Inviso">#}
       </a> -->
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-        <a class="navbar-brand btn btn-danger text-white" href="{% url 'auth:logout' %}">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </a>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-          Ajouter de donnée excel
-        </button>
-      </div>
-    </div>
-  </nav>
-  <hr />
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <a class="navbar-brand btn btn-danger text-white" href="{% url 'auth:logout' %}">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                    Ajouter de donnée excel
+                </button>
+            </div>
+        </div>
+    </nav>
+    <hr />
 
-  <!-- Modal -->
-  <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Téléverser un fichier Excel</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="mb-3">
-              <label for="excel_file" class="form-label">Sélectionnez le fichier Excel :</label>
-              <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx, .xls">
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Téléverser un fichier Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="excel_file" class="form-label">Sélectionnez le fichier Excel :</label>
+                            <input type="file" class="form-control" id="excel_file" name="excel_file"
+                                accept=".xlsx, .xls">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                            <button type="submit" class="btn btn-primary">Téléverser</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-              <button type="submit" class="btn btn-primary">Téléverser</button>
-            </div>
-          </form>
         </div>
-      </div>
     </div>
-  </div>
     <div class="container-fluid mt-4">
         {% if message %}
-            <div class="alert alert-danger" role="alert">
+        <div class="alert alert-danger" role="alert">
             {{ message }}
-            </div>
+        </div>
         {% endif %}
     </div>
-  <h1 class="mt-4">Selection les entreprises</h1>
+    <h1 class="mt-4">Selection les entreprises</h1>
 
-  <!-- Formulaire de recherche -->
-  <form method="GET" class="mb-4 row">
-    <div class="col-md-6 mb-3">
-      <label for="societe_1_name" class="form-label">Nom de la Société A:</label>
-      <select name="societe_1_name" id="societe_1_name" class="form-select">
-        <option value="">Toutes les sociétés</option>
-        {% for societe in societes %}
-          <option value="{{ societe.name }}" {% if societe.name == societe_1_name %}selected{% endif %}>{{ societe.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-6 mb-3">
-      <label for="societe_2_name" class="form-label">Nom de la Société B:</label>
-      <select name="societe_2_name" id="societe_2_name" class="form-select">
-        <option value="">Toutes les sociétés</option>
-        {% for societe in societes %}
-          <option value="{{ societe.name }}" {% if societe.name == societe_2_name %}selected{% endif %}>{{ societe.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-12">
-      <button type="submit" class="btn btn-primary">Rechercher</button>
-    </div>
-  </form>
-
-  <div class="row">
-    <div class="col-md-6">
-      <!-- Tableau 1 -->
-      <h2>Résultats de la recherche ({{ societe_1_name }}) :</h2>
-      <ul>
-        {% for association in associations1 %}
-          <li>{{ association.societe1 }} - {{ association.societe2 }} : {{ association.tiers }} ({{ association.type }})</li>
-        {% endfor %}
-      </ul>
-    </div>
-
-    <div class="col-md-6">
-      <!-- Tableau 2 -->
-      <h2>Résultats de la recherche ({{ societe_2_name }}) :</h2>
-      <ul>
-        {% for association in associations2 %}
-          <li>{{ association.societe1 }} - {{ association.societe2 }} : {{ association.tiers }} ({{ association.type }})</li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
-
-  <hr>
+    <!-- Formulaire de recherche -->
+    <form method="GET" class="mb-4 row">
+        <div class="col-md-6 mb-3">
+            <label for="societe_1_name" class="form-label">Nom de la Société A:</label>
+            <select name="societe_1_name" id="societe_1_name" class="form-select">
+                <option value="">Toutes les sociétés</option>
+                {% for societe in societes %}
+                <option value="{{ societe.name }}" {% if societe.name == societe_1_name %}selected{% endif %}>{{societe.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="societe_2_name" class="form-label">Nom de la Société B:</label>
+            <select name="societe_2_name" id="societe_2_name" class="form-select">
+                <option value="">Toutes les sociétés</option>
+                {% for societe in societes %}
+                <option value="{{ societe.name }}" {% if societe.name == societe_2_name %}selected{% endif %}
+                >{{societe.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-12">
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+        </div>
+    </form>
 
     <div class="row">
         <div class="col-md-6">
-  <table class="table table-bordered table-striped">
-    <thead class="table-dark">
-      <tr>
-        <th>CG</th>
-        <th>CT</th>
-        <th>INTITULE</th>
-        <th>DEBIT</th>
-        <th>CREDIT</th>
-        <th>REF</th>
-        <th>VALUE</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in results1 %}
-        <tr>
-          <td>{{ item.cg_num }}</td>
-          <td>{{ item.ct_num }}</td>
-          <td>{{ item.ec_intitule|slice:":60" }}</td>
-          <td>{{ item.debit }}</td>
-          <td>{{ item.credit }}</td>
-          <td>
-            <button class="btn btn-primary valider-btn" data-value="{{ item.value }}">Valider</button>
-          </td>
-          <td>{{ item.value }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+            <!-- Tableau 1 -->
+            <h2>Résultats de la recherche ({{ societe_1_name }}) :</h2>
+            <ul>
+                {% for association in associations1 %}
+                <li>{{ association.societe1 }} - {{ association.societe2 }} : {{ association.tiers }} ({{association.type }})</li>
+                {% endfor %}
+            </ul>
+        </div>
 
-<div class="col-md-6">
-  <table class="table table-bordered table-striped">
-    <thead class="table-dark">
-      <tr>
-        <th>CG</th>
-        <th>CT</th>
-        <th>INTITULE</th>
-        <th>DEBIT</th>
-        <th>CREDIT</th>
-        <th>REF</th>
-        <th>VALUE</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in results2 %}
-        <tr>
-          <td>{{ item.cg_num }}</td>
-          <td>{{ item.ct_num }}</td>
-          <td>{{ item.ec_intitule|slice:":60" }}</td>
-          <td>{{ item.debit }}</td>
-          <td>{{ item.credit }}</td>
-          <td>
-            <button class="btn btn-primary valider-btn" data-value="{{ item.value }}">Valider</button>
-          </td>
-          <td>{{ item.value }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
-      </div>
+        <div class="col-md-6">
+            <!-- Tableau 2 -->
+            <h2>Résultats de la recherche ({{ societe_2_name }}) :</h2>
+            <ul>
+                {% for association in associations2 %}
+                <li>{{ association.societe1 }} - {{ association.societe2 }} : {{ association.tiers }} ({{ association.type }})</li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
+
+    <hr>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ECPIECE</th>
+                            <th>ECNO</th>
+                            <th>JONUM</th>
+                            <th>INTITULE</th>
+                            <th>REF_PIECE</th>
+                            <th>DEBIT</th>
+                            <th>CREDIT</th>
+                            <th>REF</th>
+                            <th>VALUE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in results1 %}
+                        <tr>
+                            <td class="max-width: 40px;">{{ item.ec_piece }}</td>
+                            <td class="max-width: 50px;">{{ item.ec_no }}</td>
+                            <td class="max-width: 50px;">{{ item.jo_num }}</td>
+                            <td class="max-width: 50px;">{{ item.ec_intitule|slice:":60" }}</td>
+    {#                        <td>{{ item.ec_intitule }}</td>#}
+                            <td class="max-width: 50px;">{{ item.ec_refpiece }}</td>
+                            <td class="max-width: 50px;">{{ item.debit }}</td>
+                            <td class="max-width: 50px;">{{ item.credit }}</td>
+                            <td class="max-width: 50px;">
+                                <button class="btn btn-primary valider-btn" data-piece="{{ item.ec_piece }}"
+                                        data-jonum="{{ item.jo_num }}" data-ecno="{{ item.ec_no }}"
+                                        data-ecrefpiece="{{ item.ec_refpiece }}">Select</button>
+                            </td>
+                            <td></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ECPIECE</th>
+                            <th>ECNO</th>
+                            <th>JONUM</th>
+                            <th>INTITULE</th>
+                            <th>REF_PIECE</th>
+                            <th>DEBIT</th>
+                            <th>CREDIT</th>
+                            <th>REF</th>
+                            <th>VALUE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in results2 %}
+                        <tr>
+                            <td class="max-width: 40px;">{{ item.ec_piece }}</td>
+                            <td class="max-width: 50px;">{{ item.ec_no }}</td>
+                            <td class="max-width: 50px;">{{ item.jo_num }}</td>
+                            <td class="max-width: 50px;">{{ item.ec_intitule|slice:":45" }}</td>
+    {#                        <td>{{ item.ec_intitule }}</td>#}
+                            <td class="max-width: 50px;">{{ item.ec_refpiece }}</td>
+                            <td class="max-width: 50px;">{{ item.debit }}</td>
+                            <td class="max-width: 50px;">{{ item.credit }}</td>
+                            <td class="max-width: 50px;">
+                                <button class="btn btn-primary valider-btn" data-piece="{{ item.ec_piece }}"
+                                        data-jonum="{{ item.jo_num }}" data-ecno="{{ item.ec_no }}"
+                                        data-ecrefpiece="{{ item.ec_refpiece }}">Select</button>
+                            </td>
+                            <td class="max-width: 50px;"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block style %}
 <style>
-  /* Appliquer un style aux td contenant les résultats */
-  .result-td {
-    width: 200px; /* Ajuster la largeur de la colonne selon vos besoins */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+    /* Appliquer un style aux td contenant les résultats */
+    .result-td {
+        width: 200px;
+        /* Ajuster la largeur de la colonne selon vos besoins */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 </style>
 {% endblock %}
 {% block script %}
 <script>
-  // Function to handle the button click
-  function handleValiderClick(value) {
-    // Find all rows with the specified value in the "VALUE" column of both tables
-    const rows1 = document.querySelectorAll(`table:nth-of-type(1) td[data-value="${value}"]`);
-    const rows2 = document.querySelectorAll(`table:nth-of-type(2) td[data-value="${value}"]`);
+    $(document).ready(function () {
+        // Attach a click event handler to all elements with the class "valider-btn"
+        $(".valider-btn").click(function () {
+            // Get the data attributes from the clicked button
+            const ecPiece = $(this).data("piece");
+            const joNum = $(this).data("jonum");
+            const ecNo = $(this).data("ecno");
+            const ecRefPiece = $(this).data("ecrefpiece");
 
-    // Update the rows in both tables
-    for (const row of rows1) {
-      row.parentElement.classList.add('table-success'); // Add a class to highlight the row (you can customize this class in your CSS)
-    }
+            // Log the values to the console
+            console.log("ec_piece:", ecPiece);
+            console.log("jo_num:", joNum);
+            console.log("ec_no:", ecNo);
+            console.log("ec_refpiece:", ecRefPiece)
 
-    for (const row of rows2) {
-      row.parentElement.classList.add('table-success'); // Add a class to highlight the row (you can customize this class in your CSS)
-    }
-  }
+            // Create the data object to be sent in the POST request
+            const data = {
+                ecPiece: ecPiece,
+                ecRefPiece: ecRefPiece,
+                joNum: joNum,
+                ecNo: ecNo,
+            };
 
-  // Attach click event listener to all "Valider" buttons
-  const buttons = document.querySelectorAll('.valider-btn');
-  buttons.forEach(button => {
-    button.addEventListener('click', () => {
-      const value = button.getAttribute('data-value');
-      handleValiderClick(value);
+            // Send the data using AJAX POST request
+            $.ajax({
+                url: "{% url 'home:ajax_view' %}",  // Replace 'ajax_view' with your Django view name
+                type: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}", // Include the CSRF token for security
+                },
+                data: JSON.stringify(data),
+                dataType: "json",
+                success: function (response) {
+                    console.log("Response from Django view:", response);
+                    // Handle the response from the Django view here
+                },
+                error: function (error) {
+                    console.error("Error:", error);
+                },
+            });
+        });
     });
-  });
 </script>
+
 {% endblock %}
