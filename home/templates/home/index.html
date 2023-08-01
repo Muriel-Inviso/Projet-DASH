@@ -108,93 +108,92 @@
 
     <hr>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
+    <!-- Add a single button outside both tables to send selected values -->
+    <form action="{% url 'home:ajax_view' %}" method="post">
+    {% csrf_token %}
+        <button class="btn btn-primary" type="submit">Send Data</button>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-dark">
                         <tr>
-                            <th>ECPIECE</th>
-                            <th>ECNO</th>
-                            <th>JONUM</th>
+                            <th>JO_NUM</th>
+                            <th>EC_PIECE</th>
+                            <th>CG_NUM</th>
+                            <th>CT_NUM</th>
                             <th>INTITULE</th>
-                            <th>REF_PIECE</th>
                             <th>DEBIT</th>
                             <th>CREDIT</th>
                             <th>REF</th>
                             <th>VALUE</th>
                         </tr>
-                    </thead>
-                    <tbody>
+                        </thead>
+                        <tbody>
                         {% for item in results1 %}
-                        <tr>
-                            <td class="max-width: 40px;">{{ item.ec_piece }}</td>
-                            <td class="max-width: 50px;">{{ item.ec_no }}</td>
-                            <td class="max-width: 50px;">{{ item.jo_num }}</td>
-                            <td class="max-width: 50px;">{{ item.ec_intitule|slice:":60" }}</td>
-    {#                        <td>{{ item.ec_intitule }}</td>#}
-                            <td class="max-width: 50px;">{{ item.ec_refpiece }}</td>
-                            <td class="max-width: 50px;">{{ item.debit }}</td>
-                            <td class="max-width: 50px;">{{ item.credit }}</td>
-                            <td class="max-width: 50px;">
-                                <button class="btn btn-primary valider-btn" data-piece="{{ item.ec_piece }}"
-                                        data-jonum="{{ item.jo_num }}" data-ecno="{{ item.ec_no }}"
-                                        data-ecrefpiece="{{ item.ec_refpiece }}" data-tableau="1"
-                                        data-base="{{ societe_1_name }}" data-debit="{{ item.debit }}"
-                                        data-credit="{{ item.credit }}"
-                                >Select</button>
-                            </td>
-                            <td></td>
-                        </tr>
+                            <tr>
+                                <td class="">{{ item.jo_num }}</td>
+                                <td class="">{{ item.ec_piece }}</td>
+                                <td class="">{{ item.cg_num }}</td>
+                                <td class="">{{ item.ct_num }}</td>
+                                <td class="">{{ item.ec_intitule|slice:":40" }}</td>
+                                <td class="">{{ item.debit }}</td>
+                                <td class="">{{ item.credit }}</td>
+                                <td>
+                                    <input type="checkbox" class="tableau1-checkbox" data-piece="{{ item.ec_piece }}"
+                                           data-jonum="{{ item.jo_num }}" data-ecno="{{ item.ec_no }}"
+                                           data-ecrefpiece="{{ item.ec_refpiece }}" data-base="{{ societe_2_name }}"
+                                           data-debit="{{ item.debit }}" data-credit="{{ item.credit }}"/>
+                                </td>
+                                <td>{{ item.interco }}</td>
+                            </tr>
                         {% endfor %}
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
-        <div class="col-md-6">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
+            <div class="col-md-6">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-dark">
                         <tr>
-                            <th>ECPIECE</th>
-                            <th>ECNO</th>
-                            <th>JONUM</th>
+                            <th>JO_NUM</th>
+                            <th>EC_PIECE</th>
+                            <th>CG_NUM</th>
+                            <th>CT_NUM</th>
                             <th>INTITULE</th>
-                            <th>REF_PIECE</th>
                             <th>DEBIT</th>
                             <th>CREDIT</th>
                             <th>REF</th>
                             <th>VALUE</th>
                         </tr>
-                    </thead>
-                    <tbody>
+                        </thead>
+                        <tbody>
                         {% for item in results2 %}
-                        <tr>
-                            <td class="max-width: 40px;">{{ item.ec_piece }}</td>
-                            <td class="max-width: 50px;">{{ item.ec_no }}</td>
-                            <td class="max-width: 50px;">{{ item.jo_num }}</td>
-                            <td class="max-width: 50px;">{{ item.ec_intitule|slice:":45" }}</td>
-    {#                        <td>{{ item.ec_intitule }}</td>#}
-                            <td class="max-width: 50px;">{{ item.ec_refpiece }}</td>
-                            <td class="max-width: 50px;">{{ item.debit }}</td>
-                            <td class="max-width: 50px;">{{ item.credit }}</td>
-                            <td class="max-width: 50px;">
-                                <button class="btn btn-primary valider-btn" data-piece="{{ item.ec_piece }}"
-                                        data-jonum="{{ item.jo_num }}" data-ecno="{{ item.ec_no }}"
-                                        data-ecrefpiece="{{ item.ec_refpiece }}" data-tableau="2"
-                                        data-base="{{ societe_2_name }}" data-debit="{{ item.debit }}"
-                                        data-credit="{{ item.credit }}"
-                                >Select</button>
-                            </td>
-                            <td class="max-width: 50px;"></td>
-                        </tr>
+                            <tr>
+                                <td class="">{{ item.jo_num }}</td>
+                                <td class="">{{ item.ec_piece }}</td>
+                                <td class="">{{ item.cg_num }}</td>
+                                <td class="">{{ item.ct_num }}</td>
+                                <td class="">{{ item.ec_intitule|slice:":40" }}</td>
+                                <td class="">{{ item.debit }}</td>
+                                <td class="">{{ item.credit }}</td>
+                                <td>
+                                    <input type="checkbox" class="tableau2-checkbox" data-piece="{{ item.ec_piece }}"
+                                           data-jonum="{{ item.jo_num }}" data-ecno="{{ item.ec_no }}"
+                                           data-ecrefpiece="{{ item.ec_refpiece }}" data-base="{{ societe_1_name }}"
+                                           data-debit="{{ item.debit }}" data-credit="{{ item.credit }}"/>
+                                </td>
+                                <td class="max-width: 50px;">{{ item.interco }}</td>
+                            </tr>
                         {% endfor %}
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    </div>
+    </form>
 </div>
 {% endblock %}
 
@@ -213,59 +212,67 @@
 {% block script %}
 <script>
     $(document).ready(function () {
-        // Attach a click event handler to all elements with the class "valider-btn"
-        $(".valider-btn").click(function () {
-            // Get the data attributes from the clicked button
-            const ecPiece = $(this).data("piece");
-            const joNum = $(this).data("jonum");
-            const ecNo = $(this).data("ecno");
-            const ecRefPiece = $(this).data("ecrefpiece");
-            const tableau = $(this).data("tableau");
-            const base = $(this).data("base");
-            const debit = $(this).data("debit");
-            const credit = $(this).data("credit");
+        let A = [];
+        let B = [];
 
-            // Log the values to the console
-            console.log("ec_piece:", ecPiece);
-            console.log("jo_num:", joNum);
-            console.log("ec_no:", ecNo);
-            console.log("ec_refpiece:", ecRefPiece);
-            console.log("tableau:", tableau);
-            console.log("base:", base);
-            console.log("debit:", debit);
-            console.log("credit:", credit);
+        // Handle click on Tableau 1 checkboxes
+        $(".tableau1-checkbox").change(function () {
+            const isChecked = $(this).prop("checked");
+            const data = $(this).data();
 
-            // Create the data object to be sent in the POST request
-            const data = {
-                ecPiece: ecPiece,
-                ecRefPiece: ecRefPiece,
-                joNum: joNum,
-                ecNo: ecNo,
-                tableau: tableau,
-                base: base,
-                debit: debit,
-                credit: credit
+            if (isChecked) {
+                A.push(data);
+            } else {
+                A = A.filter((item) => item.ecPiece !== data.ecPiece && item.joNum !== data.joNum);
+            }
+        });
+
+        // Handle click on Tableau 2 checkboxes
+        $(".tableau2-checkbox").change(function () {
+            const isChecked = $(this).prop("checked");
+            const data = $(this).data();
+
+            if (isChecked) {
+                B.push(data);
+            } else {
+                B = B.filter((item) => item.ecPiece !== data.ecPiece && item.joNum !== data.joNum);
+            }
+        });
+
+        // Handle click on the "Send Data" button
+        $("form").submit(function (event) {
+            event.preventDefault();
+
+            // Combine the selected data from both arrays into a single object
+            const dataToSend = {
+                A: A,
+                B: B
             };
 
-            // Send the data using AJAX POST request
+            // Send the data to the server using AJAX
             $.ajax({
-                url: "{% url 'home:ajax_view' %}",  // Replace 'ajax_view' with your Django view name
+                url: "{% url 'home:ajax_view' %}",
                 type: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": "{{ csrf_token }}", // Include the CSRF token for security
+                    "X-CSRFToken": "{{ csrf_token }}",
                 },
-                data: JSON.stringify(data),
+                data: JSON.stringify(dataToSend), // Convert the object to JSON
                 dataType: "json",
                 success: function (response) {
-                    console.log("Response from Django view:", response);
-                    // Handle the response from the Django view here
+                    console.log("Réponse de la vue Django :", response);
+                    {#const url = `{% url 'home:index' %}?societe_1_name=${encodeURIComponent(response['societe_1_name'])}&societe_2_name=${encodeURIComponent(response['societe_2_name'])}`;#}
+                    {#window.location.href = url;#}
                 },
                 error: function (error) {
-                    console.error("Error:", error);
+                    console.error("Erreur :", error);
                 },
             });
         });
     });
 </script>
+
+
 {% endblock %}
+
+

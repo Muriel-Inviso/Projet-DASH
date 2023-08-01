@@ -61,3 +61,38 @@ class Indentite(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Tableau(models.Model):
+    base = models.CharField(max_length=50, null=True)
+    ecPiece = models.IntegerField()
+    ecRefPiece = models.CharField(max_length=50)
+    ecNo = models.IntegerField()
+
+    def __str__(self):
+        return self.base
+
+
+class IntercoHistorique(models.Model):
+    interco = models.CharField(max_length=10, null=True)
+    tableau1 = models.ForeignKey(
+        Tableau,
+        on_delete=models.CASCADE,
+        related_name='historique_tableau1',  # Spécifiez un nom de related_name distinct pour cette clé étrangère
+        null=True
+    )
+
+    tableau2 = models.ForeignKey(
+        Tableau,
+        on_delete=models.CASCADE,
+        related_name='historique_tableau2',  # Spécifiez un nom de related_name distinct pour cette clé étrangère
+        null=True
+    )
+
+    def __str__(self):
+        return self.interco
+
+    @classmethod
+    def get_last_interco(cls):
+        last_interco_obj = cls.objects.order_by('-id').first()
+        return last_interco_obj.interco if last_interco_obj else None

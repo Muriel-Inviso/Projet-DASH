@@ -2,8 +2,8 @@ import pandas as pd
 import pyodbc
 import json
 from django.shortcuts import render, redirect
-from .models import Societe, AssociationSociete, Type, Tiers, Indentite
-from django.http import JsonResponse, HttpResponse
+from .models import Societe, AssociationSociete, Type, Tiers, Indentite, IntercoHistorique, Tableau
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.core.exceptions import ValidationError
 from .forms import ImportExcelForm
 from openpyxl import load_workbook
@@ -53,8 +53,8 @@ def chercher(database, ct_num, cg_num, conn_str):
             cg_num = format_tuple(cg_num)
 
             # Utilisation de paramètres pour éviter les vulnérabilités d'injection SQL
-            query = "SELECT  JO_NUM, EC_PIECE, EC_No, EC_INTITULE, EC_REFPIECE, CASE WHEN EC_SENS =0 THEN EC_MONTANT END AS DEBIT," \
-                    f" CASE WHEN EC_SENS =1 THEN EC_MONTANT END AS CREDIT FROM F_ECRITUREC WHERE (CT_NUM in {ct_num}" \
+            query = "SELECT  JO_NUM, EC_PIECE, CG_NUM, CT_NUM, EC_INTITULE, EC_REFPIECE, EC_No, CASE WHEN EC_SENS =0 THEN EC_MONTANT END AS DEBIT, " \
+                    f" CASE WHEN EC_SENS =1 THEN EC_MONTANT END AS CREDIT, LETTRE_INTERCO FROM F_ECRITUREC WHERE (CT_NUM in {ct_num}" \
                     f" OR CG_NUM in {cg_num}) AND year(jm_date)=2023"
 
             cursor.execute(query)
@@ -72,19 +72,45 @@ def chercher(database, ct_num, cg_num, conn_str):
     data = []
 
     for row in rows:
-        JO_NUM, EC_PIECE, EC_No, EC_INTITULE, EC_REFPIECE, DEBIT, CREDIT = row
+        JO_NUM, EC_PIECE, CG_NUM, CT_NUM, EC_INTITULE, EC_REFPIECE, EC_No, DEBIT, CREDIT, LETTRE_INTERCO = row
 
         item = {
             'jo_num': JO_NUM,
             'ec_piece': EC_PIECE,
             'ec_no': EC_No,
+            'cg_num': CG_NUM,
+            'ct_num': CT_NUM,
             'ec_intitule': EC_INTITULE,
             'ec_refpiece': EC_REFPIECE,
+            'interco': LETTRE_INTERCO,
             'debit': "{:.2f}".format(float(DEBIT)) if DEBIT else '',
             'credit': "{:.2f}".format(float(CREDIT)) if CREDIT else ''
         }
         data.append(item)
     return data
+
+
+def updade(database, ecPiece, ecRefPiece, ecNo, conn_str, jo_num, interco):
+    error_message = None
+    try:
+        with pyodbc.connect(conn_str[0]) as connection:
+            cursor = connection.cursor()
+            query = "UPDATE F_ECRITUREC SET LETTRE_INTERCO=? WHERE EC_PIECE=? AND EC_REFPIECE=? AND EC_No=? AND JO_NUM=? AND year(jm_date)=2023"
+            params = (interco, ecPiece, ecRefPiece, ecNo, jo_num)
+            cursor.execute(query, params)
+
+            # Just return True after the successful update
+
+            return True
+    except pyodbc.OperationalError as e:
+        error_message = f"Une erreur s'est produite lors de la connexion à la base de données INVISO : {e}"
+    except pyodbc.Error as e:
+        error_message = f"Une erreur s'est produite lors de l'exécution de la requête : {e}"
+        return False
+    finally:
+        if error_message:
+            # You may log the error or take appropriate action based on the error_message.
+            pass
 
 
 def format_tuple(t):
@@ -170,9 +196,9 @@ def index(request):
                 results2 = chercher(database=societe_2_name, ct_num=value2[0], cg_num=value2[1], conn_str=conn_2)
 
             except ValidationError as e:
-                message = f"Une erreur s'est produite lors de la recherche dans la base de données :  {str(e)}"
+                message = f"Une erreur s'est produite lors de la recherche dans la base de données (ValidationError) :  {str(e)}"
             except Exception as e:
-                message = f"Une erreur s'est produite lors de la recherche dans la base de données :  {str(e)}"
+                message = f"Une erreur s'est produite lors de la recherche dans la base de données (Exception) :  {str(e)}"
 
         else:
             associations1 = {}
@@ -248,37 +274,87 @@ def importer_associations(file):
                 societe2=societe2,
                 tiers=tiers,
                 type=type_obj,
-                # connexion=connexion  # Associer la connexion à la société
+                # connexion=connexion
+                # Associer la connexion à la société
             )
 
 
-def ajax_view(request):
-    # Define the keys for session data
-    data_keys = ['ecPiece', 'ecRefPiece', 'joNum', 'ecNo', 'debit', 'credit']
+# Nouvelle fonction pour générer le numéro interco unique
+# Nouvelle fonction pour générer le numéro interco unique
+def generate_interco():
+    last_interco_obj = IntercoHistorique.objects.order_by('-id').first()
 
+    if last_interco_obj and last_interco_obj.interco.startswith('I'):
+        last_number = int(last_interco_obj.interco[1:])  # Récupérer le numéro après "I"
+        new_number = last_number + 1
+    else:
+        new_number = 1
+
+    interco_number = f"{new_number:04}"
+    return f"I{interco_number}"
+
+
+# Nouvelle fonction pour mettre à jour les données de A et B dans la base de données
+def update_data(database, ecPiece, ecRefPiece, ecNo, joNum, interco):
+    update = updade(database=database, ecPiece=ecPiece, ecRefPiece=ecRefPiece, ecNo=ecNo,
+                    conn_str=get_connection_string(database), jo_num=joNum, interco=interco)
+
+    return update
+
+
+# Refactorisation de la fonction ajax_view
+
+def ajax_view(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            tableau = data.get('tableau', 0)
-            request.session['tableau1'] = 1 if tableau == 1 else 0
-            request.session['tableau2'] = 1 if tableau == 2 else 0
+            A = data.get('A', {})
+            B = data.get('B', {})
+            debit_A = A.get('debit', 0)
+            credit_A = A.get('credit', 0)
+            debit_B = B.get('debit', 0)
+            credit_B = B.get('credit', 0)
+            print("Dans post !")
 
-            # Loop through the data_keys and set the corresponding session variables
-            for key in data_keys:
-                if f'{key}1' in data:
-                    request.session[f'{key}1'] = data[f'{key}1']
-                if f'{key}2' in data:
-                    request.session[f'{key}2'] = data[f'{key}2']
+            if debit_A == credit_B and credit_A == debit_B:
+                print("A = B")
+                interco = generate_interco()  # Générer le numéro d'interco
 
-            # Check if condition using session variables instead of separate variables
-            if request.session['tableau1'] == 1 and request.session['tableau2'] == 1:
-                if request.session['debit1'] == request.session['credit2'] and request.session['credit1'] == request.session['debit2'] \
-                        or request.session['debit2'] == request.session['credit1'] and request.session['credit2'] == request.session['debit1']:
-                    print('EXECUTE')
+                IntercoHistorique.objects.create(
+                    interco=interco,
+                    tableau1=Tableau.objects.create(base=A['base'], ecPiece=A['ecPiece'],
+                                                    ecRefPiece=A['ecRefPiece'], ecNo=A['ecNo']),
+                    tableau2=Tableau.objects.create(base=B['base'], ecPiece=B['ecPiece'],
+                                                    ecRefPiece=B['ecRefPiece'], ecNo=B['ecNo']),
+                )
 
-            return JsonResponse({"success": True, "message": "Data received successfully."})
+                value1 = update_data(database=A.get('base', ''), ecPiece=A.get('ecPiece', ''),
+                                     ecRefPiece=A.get('ecRefPiece', ''),
+                                     ecNo=A.get('ecNo', ''), joNum=A.get('joNum', ''), interco=interco)
+
+                value2 = update_data(database=B.get('base', ''), ecPiece=B.get('ecPiece', ''),
+                                     ecRefPiece=B.get('ecRefPiece', ''),
+                                     ecNo=B.get('ecNo', ''), joNum=B.get('joNum', ''), interco=interco)
+
+                if value1 and value2:
+                    message = "Update reuissi !"
+                    # return JsonResponse({'success': True, 'message': message, 'societe_1_name': A.get('base', ''),'societe_2_name': B.get('base', '')})
+                    return redirect('home:index')
+                else:
+                    message = 'An error occurred during data update.'
+                    return JsonResponse({'success': False, 'message': message})
+
+            else:
+                message = 'Debit/Credit or ecRefPiece values do not match.'
+                return JsonResponse({'success': False, 'message': message})
+
         except json.JSONDecodeError:
-            return JsonResponse({"success": False, "message": "Invalid JSON data."})
-    else:
-        return JsonResponse({"success": False, "message": "Invalid request method."})
+            message = "Invalid JSON data."
+            return JsonResponse({'success': False, 'message': message})
 
+        except Exception as e:
+            message = f'An unexpected error occurred : {e}'
+            return JsonResponse({'success': False, 'message': message})
+    else:
+        message = "Invalid request method."
+        return JsonResponse({'success': False, 'message': message})

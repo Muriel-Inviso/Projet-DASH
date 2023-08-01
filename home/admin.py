@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Societe, Connexion, Type, Tiers, AssociationSociete, Indentite
+from .models import Societe, Connexion, Type, Tiers, AssociationSociete, Indentite, IntercoHistorique, \
+    Tableau
 
 
 class AssociationSocieteInline(admin.TabularInline):
@@ -54,3 +55,18 @@ class AssociationSocieteModelAdmin(admin.ModelAdmin):
 @admin.register(Indentite)
 class IdentiteModelAdmin(admin.ModelAdmin):
     list_display = ['name', 'correspondance']
+
+
+@admin.register(Tableau)
+class TableauAdmin(admin.ModelAdmin):
+    list_display = ('base', 'ecPiece', 'ecRefPiece', 'ecNo')
+    ordering = ('base',)
+    search_fields = ('base', 'ecRefPiece')
+    list_per_page = 10
+    list_filter = ('base',)
+
+
+@admin.register(IntercoHistorique)
+class IntercoHistoriqueAdmin(admin.ModelAdmin):
+    list_display = ('interco', 'tableau1', 'tableau2')
+    ordering = ('interco',)
